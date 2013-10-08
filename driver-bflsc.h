@@ -202,6 +202,11 @@ struct SaveString {
 };
 
 // Commands (Single Stage)
+#define BFLSC_GETFREQ "ZKX"
+#define BFLSC_GETFREQ_LEN (sizeof(BFLSC_GETFREQ)-1)
+#define BFLSC_SETFREQ "ZVX"
+#define BFLSC_SETFREQ_LEN (sizeof(BFLSC_SETFREQ)-1)
+
 #define BFLSC_IDENTIFY "ZGX"
 #define BFLSC_IDENTIFY_LEN (sizeof(BFLSC_IDENTIFY)-1)
 #define BFLSC_DETAILS "ZCX"
