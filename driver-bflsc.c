@@ -557,10 +557,11 @@ static bool getinfo(struct cgpu_info *bflsc, int dev)
 {
 	struct bflsc_info *sc_info = (struct bflsc_info *)(bflsc->device_data);
 	struct bflsc_dev sc_dev;
+	char sz_buf[1024];
 	char buf[BFLSC_BUFSIZ+1];
 	int err, amount;
 	char **items, *firstname, **fields, *lf;
-	bool res, ok = false;
+	bool sent, res, ok = false;
 	int i, lines, count;
 	char *tmp;
 
@@ -576,6 +577,22 @@ static bool getinfo(struct cgpu_info *bflsc, int dev)
 	 * --CHAIN PRESENCE MASK: 00000000<LF>
 	 * OK<LF>
 	 */
+	/* sz_buf like in hostprotocol code...should be 4 chars making the frequency somehow */
+	sz_buf[0] = 200;
+	sz_buf[1] = 201;
+	sz_buf[2] = 202;
+	sz_buf[3] = 203;
+	err = send_recv_ss(bflsc, dev, &sent, &amount,
+				BFLSC_GETFREQ, BFLSC_GETFREQ_LEN, C_QUEFLUSH,
+				sz_buf, sizeof(sz_buf)-1, C_QUEFLUSHREPLY, READ_NL);
+				
+	applog(LOG_WARNING, "setfreq: %s (%s) (%d:%d)",
+		bflsc->drv->dname, bflsc->device_path, amount, err);
+
+	err = write_to_dev(bflsc, dev, BFLSC_GETFREQ, BFLSC_GETFREQ_LEN, &amount, C_REQUESTDETAILS);
+	applog(LOG_WARNING, "getfreq: %s (%s) (%d:%d)",
+		bflsc->drv->dname, bflsc->device_path, amount, err);
+
 
 	/*
 	 * Don't use send_recv_ss() since we have a different receive timeout
@@ -614,6 +631,13 @@ static bool getinfo(struct cgpu_info *bflsc, int dev)
 
 	for (i = 0; i < lines-2; i++) {
 		res = breakdown(ONECOLON, items[i], &count, &firstname, &fields, &lf);
+		tmp = str_text(items[i]);
+		# get results from the device printed right away with cgminer -T
+		applogsiz(LOG_WARNING, BFLSC_APPLOGSIZ,
+				"GETINFO: %s (%s) '%s' %d",
+				bflsc->drv->dname, bflsc->device_path, tmp, count);
+		free(tmp);
+	
 		if (lf)
 			*lf = '\0';
 		if (!res || count != 1) {
